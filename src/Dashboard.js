@@ -40,9 +40,9 @@ function Row(props) {
                 <TableCell component="th" scope="row">
                     {row.hash}
                 </TableCell>
-                <TableCell align="right">{row.height}</TableCell>
-                <TableCell align="right">{row.time}</TableCell>
-                <TableCell align="right">{row.packets.length}</TableCell>
+                <TableCell align="center">{row.height}</TableCell>
+                <TableCell align="center">{new Date(row.time).toLocaleString()}</TableCell>
+                <TableCell align="center">{row.packets.length}</TableCell>
             </TableRow>
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -181,9 +181,9 @@ class Dashboard extends React.Component {
                             <TableRow>
                                 <TableCell />
                                 <TableCell>Tx Hash</TableCell>
-                                <TableCell align="right">Height</TableCell>
-                                <TableCell align="right">Timestamp</TableCell>
-                                <TableCell align="right">Packets Count</TableCell>
+                                <TableCell align="center">Height</TableCell>
+                                <TableCell align="center">Timestamp</TableCell>
+                                <TableCell align="center">Packets Count</TableCell>
                             </TableRow>
                         </TableHead>
                         {
