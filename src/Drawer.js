@@ -51,10 +51,12 @@ const useStyles = makeStyles((theme) => ({
         padding: theme.spacing(3),
         width: `calc(100% - ${drawerWidth}px)`,
     },
+    children: {
+    }
 }));
 
 function ResponsiveDrawer(props) {
-    const { window, selected, setSelected, menu } = props;
+    const { window, selected, setSelected, menu, setValue } = props;
     const classes = useStyles();
     const theme = useTheme();
     const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -64,7 +66,8 @@ function ResponsiveDrawer(props) {
     };
 
     const handleMenuItem = (event, index) => {
-        setSelected(index)
+        setSelected(index);
+        setValue(0);
     }
 
     const drawer = (
@@ -78,6 +81,7 @@ function ResponsiveDrawer(props) {
                     <ListItem button
                         key={p.heading}
                         selected={index === selected}
+                        disabled={index === selected}
                         onClick={(event) => handleMenuItem(event, index)}>
                         <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
                         <ListItemText primary={p.heading} />
@@ -104,7 +108,7 @@ function ResponsiveDrawer(props) {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" noWrap>
-                        {menu[selected].heading}
+                        {`${menu[selected].heading} Relayed IBC transactions`}
                     </Typography>
                 </Toolbar>
             </AppBar>
@@ -141,7 +145,9 @@ function ResponsiveDrawer(props) {
             </nav>
             <main className={classes.content}>
                 <div className={classes.toolbar} />
-                {props.children}
+                <div className={classes.children}>
+                    {props.children}
+                </div>
             </main>
         </div>
     );

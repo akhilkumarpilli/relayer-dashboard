@@ -24,21 +24,6 @@ const useRowStyles = makeStyles({
     }
 });
 
-function createData(name, calories, fat, carbs, protein, price) {
-    return {
-        name,
-        calories,
-        fat,
-        carbs,
-        protein,
-        price,
-        history: [
-            { date: '2020-01-05', customerId: '11091700', amount: 3 },
-            { date: '2020-01-02', customerId: 'Anonymous', amount: 1 },
-        ],
-    };
-}
-
 function Row(props) {
     const { row } = props;
     const [open, setOpen] = React.useState(false);
@@ -104,28 +89,22 @@ function Row(props) {
     );
 }
 
-const rows = [
-    createData('Frozen yoghurt', 159, 6.0, 24, 4.0, 3.99),
-    createData('Ice cream sandwich', 237, 9.0, 37, 4.3, 4.99),
-    createData('Eclair', 262, 16.0, 24, 6.0, 3.79),
-    createData('Cupcake', 305, 3.7, 67, 4.3, 2.5),
-    createData('Gingerbread', 356, 16.0, 49, 3.9, 1.5),
-];
-
 class Dashboard extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            fromData: [],
-            toData: [],
-            fromPage: 0,
-            toPage: 0,
-            fromLimit: 10,
-            toLimit: 10,
-            totalFromCount: 0,
-            totalToCount: 0,
-            loading: true
+            data: [],
+            page: 0,
+            limit: 10,
+            totalCount: 0,
+            loading: true,
+            path: props.path,
+            txType: "from"
         }
+    }
+
+    capitalizeString = (value) => {
+        return value.charAt(0).toUpperCase() + value.slice(1);
     }
 
     callApi = () => {
@@ -133,17 +112,16 @@ class Dashboard extends React.Component {
         try {
             axios({
                 method: 'GET',
-                url: `http://143.198.99.191:5555/relayed-packets/${this.props.path}?fromLimit=${this.state.fromLimit}&toLimit=${this.state.toLimit}&
-fromOffset=${this.state.fromPage * this.state.fromLimit}&toOffset=${this.state.toPage * this.state.toLimit}`
+                url: `http://143.198.99.191:5555/relayed-packets/${this.state.path}?${this.state.txType}Limit=${this.state.limit}
+&${this.state.txType}Offset=${this.state.page * this.state.limit}`
             }).then(
                 (response) => {
                     let data = response.data;
                     this.setState({
-                        fromData: (data.data && data.data.from_osmosis_packets) || [],
-                        toData: (data.data && data.data.to_osmosis_packets) || [],
+                        data: (data.data && data.data[`${this.state.txType}_osmosis_packets`]) || [],
                         loading: false,
-                        totalFromCount: (data.data && data.data.pagination && data.data.pagination.totalFromPackets) || 0,
-                        totalToCount: (data.data && data.data.pagination && data.data.pagination.totalToPackets) || 0,
+                        totalCount: (data.data && data.data.pagination &&
+                            data.data.pagination[`total${this.capitalizeString(this.state.txType)}Packets`]) || 0,
                     });
                 },
                 (error) => {
@@ -161,22 +139,34 @@ fromOffset=${this.state.fromPage * this.state.fromLimit}&toOffset=${this.state.t
         this.callApi();
     }
 
+
+    componentWillReceiveProps = (nextProps) => {
+        if (nextProps.path !== this.props.path || nextProps.txType !== this.props.txType) {
+            this.setState({
+                path: nextProps.path,
+                txType: nextProps.txType,
+                data: [],
+                page: 0,
+                limit: 10,
+                totalCount: 0,
+            }, () => {
+                this.callApi();
+            })
+        }
+    }
+
     handleChangePage = (event, newPage) => {
-        console.log("Page..", newPage);
-        this.setState({ fromPage: newPage }, () => {
+        this.setState({ page: newPage }, () => {
             this.callApi();
         })
     };
 
     handleChangeRowsPerPage = (event) => {
         this.setState({
-            fromLimit: parseInt(event.target.value, 10),
-            fromData: [],
-            toData: [],
-            fromPage: 0,
-            toPage: 0,
-            totalFromCount: 0,
-            totalToCount: 0,
+            limit: parseInt(event.target.value, 10),
+            data: [],
+            page: 0,
+            totalCount: 0,
         }, () => {
             this.callApi();
         })
@@ -185,7 +175,7 @@ fromOffset=${this.state.fromPage * this.state.fromLimit}&toOffset=${this.state.t
     render() {
         return (
             <Paper>
-                <TableContainer>
+                <TableContainer style={{ paddingTop: 5 }}>
                     <Table aria-label="collapsible table">
                         <TableHead>
                             <TableRow>
@@ -196,28 +186,29 @@ fromOffset=${this.state.fromPage * this.state.fromLimit}&toOffset=${this.state.t
                                 <TableCell align="right">Packets Count</TableCell>
                             </TableRow>
                         </TableHead>
-                        <TableBody>
-                            {
-                                (this.state.fromData.length && !this.state.loading) ?
-
-                                    this.state.fromData.map((row) => (
+                        {
+                            (this.state.data.length && !this.state.loading) ?
+                                <TableBody>
+                                    {this.state.data.map((row) => (
                                         <Row key={row.name} row={row} />
-                                    )) :
-                                    <div className="container-fluid">
-                                        <div className="row">
-                                            <h5 style={{ textAlign: "center" }}>{this.state.loading ? "Loading..." : "No data found"}</h5>
-                                        </div>
-                                    </div>
-                            }
-                        </TableBody>
+
+                                    ))}
+                                </TableBody>
+                                :
+                                <TableRow>
+                                    <TableCell style={{ borderBottom: 0 }} colSpan={6}>
+                                        <h5 style={{ textAlign: "center" }}>{this.state.loading ? "Loading..." : "No data found"}</h5>
+                                    </TableCell>
+                                </TableRow>
+                        }
                     </Table>
                 </TableContainer>
                 <TablePagination
                     rowsPerPageOptions={[10, 30, 100]}
                     component="div"
-                    count={this.state.totalFromCount}
-                    rowsPerPage={this.state.fromLimit}
-                    page={this.state.fromPage}
+                    count={parseInt(this.state.totalCount, 10)}
+                    rowsPerPage={this.state.limit}
+                    page={this.state.page}
                     onPageChange={this.handleChangePage}
                     onRowsPerPageChange={this.handleChangeRowsPerPage}
                 />
