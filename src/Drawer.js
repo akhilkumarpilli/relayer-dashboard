@@ -10,11 +10,15 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import Collapse from '@material-ui/core/Collapse';
 import MailIcon from '@material-ui/icons/Mail';
 import MenuIcon from '@material-ui/icons/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
+import StarBorder from '@material-ui/icons/StarBorder';
 
 const drawerWidth = 240;
 
@@ -52,22 +56,55 @@ const useStyles = makeStyles((theme) => ({
         width: `calc(100% - ${drawerWidth}px)`,
     },
     children: {
-    }
+    },
+    nested: {
+        paddingLeft: theme.spacing(4),
+    },
 }));
 
 function ResponsiveDrawer(props) {
-    const { window, selected, setSelected, menu, setValue } = props;
+    const { window, selected, setSelected, menu, setValue, relayed, setRelayed } = props;
     const classes = useStyles();
     const theme = useTheme();
     const [mobileOpen, setMobileOpen] = React.useState(false);
+    const [open, setOpen] = React.useState(true);
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
     };
 
-    const handleMenuItem = (event, index) => {
+    const handleMenuItem = (event, value) => {
+        if (relayed === value) {
+            setOpen(!open);
+        } else {
+            setRelayed(!relayed);
+            setSelected(0);
+            setOpen(true);
+        }
+    }
+
+    const handleSubMenuItem = (event, index) => {
         setSelected(index);
         setValue(0);
+    }
+
+    const returnList = () => {
+        return (<List component="div" disablePadding>
+            {menu.map((p, index) => (
+                <>
+                    <ListItem button
+                        key={`${p.heading} ${relayed}`}
+                        selected={index === selected}
+                        // disabled={index === selected}
+                        onClick={(event) => handleSubMenuItem(event, index)}
+                        className={classes.nested}
+                    >
+                        <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
+                        <ListItemText primary={p.heading} />
+                    </ListItem>
+                </>
+            ))}
+        </List>)
     }
 
     const drawer = (
@@ -77,16 +114,34 @@ function ResponsiveDrawer(props) {
             </div>
             <Divider />
             <List>
-                {menu.map((p, index) => (
-                    <ListItem button
-                        key={p.heading}
-                        selected={index === selected}
-                        disabled={index === selected}
-                        onClick={(event) => handleMenuItem(event, index)}>
-                        <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-                        <ListItemText primary={p.heading} />
-                    </ListItem>
-                ))}
+                <ListItem button
+                    selected={relayed}
+                    // disabled={relayed}
+                    onClick={(event) => handleMenuItem(event, true)}
+                >
+                    <ListItemIcon>
+                        <StarBorder />
+                    </ListItemIcon>
+                    <ListItemText primary={"Relayed Txs"} />
+                    {open && relayed ? <ExpandLess /> : <ExpandMore />}
+                </ListItem>
+                <Collapse in={open && relayed} timeout="auto" unmountOnExit>
+                    {returnList()}
+                </Collapse>
+                <ListItem button
+                    selected={!relayed}
+                    // disabled={!relayed}
+                    onClick={(event) => handleMenuItem(event, false)}
+                >
+                    <ListItemIcon>
+                        <StarBorder />
+                    </ListItemIcon>
+                    <ListItemText primary={"Pending Txs"} />
+                    {open && !relayed ? <ExpandLess /> : <ExpandMore />}
+                </ListItem>
+                <Collapse in={open && !relayed} timeout="auto" unmountOnExit>
+                    {returnList()}
+                </Collapse>
             </List>
         </div>
     );
@@ -108,7 +163,7 @@ function ResponsiveDrawer(props) {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" noWrap>
-                        {`${menu[selected].heading} Relayed IBC transactions`}
+                        {`${menu[selected].heading} ${relayed ? 'Relayed' : 'Pending'} IBC transactions`}
                     </Typography>
                 </Toolbar>
             </AppBar>

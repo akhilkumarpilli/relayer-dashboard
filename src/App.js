@@ -1,5 +1,6 @@
 import React from 'react';
-import Dashboard from "./Dashboard.js";
+import Relayed from "./Relayed.js";
+import Unrelayed from "./Unrelayed.js";
 import { createTheme, ThemeProvider } from '@material-ui/core/styles';
 import ResponsiveDrawer from "./Drawer.js";
 import Paper from '@material-ui/core/Paper';
@@ -54,7 +55,8 @@ const theme = createTheme({
 
 function App() {
   const [selected, setSelected] = React.useState(0);
-  const [value, setValue] = React.useState(0);
+  const [tabValue, setValue] = React.useState(0);
+  const [relayed, setRelayed] = React.useState(true);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -63,20 +65,34 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <div>
-        <ResponsiveDrawer menu={paths} selected={selected} setSelected={setSelected} setValue={setValue}>
-          <Paper>
-            <Tabs
-              value={value}
-              onChange={handleChange}
-              indicatorColor="primary"
-              textColor="primary"
-              centered
-            >
-              <Tab label={`${paths[selected].dst} to ${paths[selected].src}`} />
-              <Tab label={`${paths[selected].src} to ${paths[selected].dst}`} />
-            </Tabs>
-          </Paper>
-          <Dashboard path={paths[selected].path} txType={value === 1 ? "to" : "from"} />
+        <ResponsiveDrawer
+          menu={paths}
+          selected={selected}
+          setSelected={setSelected}
+          setValue={setValue}
+          relayed={relayed}
+          setRelayed={setRelayed}
+        >
+          {
+            relayed ?
+              <>
+                <Paper>
+                  <Tabs
+                    value={tabValue}
+                    onChange={handleChange}
+                    indicatorColor="primary"
+                    textColor="primary"
+                    centered
+                  >
+                    <Tab label={`${paths[selected].dst} to ${paths[selected].src}`} />
+                    <Tab label={`${paths[selected].src} to ${paths[selected].dst}`} />
+                  </Tabs>
+                </Paper>
+                <Relayed path={paths[selected].path} txType={tabValue === 1 ? "to" : "from"} />
+              </>
+              : <Unrelayed path={paths[selected].path} />
+          }
+
         </ResponsiveDrawer>
       </div>
     </ThemeProvider>

@@ -9,7 +9,6 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import TablePagination from '@material-ui/core/TablePagination';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
@@ -38,18 +37,20 @@ function Row(props) {
                     </IconButton>
                 </TableCell>
                 <TableCell component="th" scope="row">
-                    {row.hash}
+                    {row.sequence}
                 </TableCell>
-                <TableCell align="center">{row.height}</TableCell>
+                <TableCell align="center">{row.hash}</TableCell>
                 <TableCell align="center">{new Date(row.time).toLocaleString()}</TableCell>
-                <TableCell align="center">{row.packets.length}</TableCell>
+                <TableCell align="center">{row.from}</TableCell>
+                <TableCell align="center">{row.to}</TableCell>
+                <TableCell align="center">{row.height}</TableCell>
             </TableRow>
             <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
                     <Collapse in={open} timeout="auto" unmountOnExit>
                         <Box margin={1}>
                             <Typography variant="h6" gutterBottom component="div">
-                                Packets
+                                Packet Details
                             </Typography>
                             <Table size="small" aria-label="packets">
                                 <TableHead>
@@ -63,22 +64,20 @@ function Row(props) {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {row.packets.map((packet) => (
-                                        <TableRow key={packet.sequence}>
-                                            <TableCell component="th" scope="row">
-                                                {packet.sequence}
-                                            </TableCell>
-                                            <TableCell>{packet.fromAddr}</TableCell>
-                                            <TableCell>{packet.toAddr}</TableCell>
-                                            <TableCell align="right">{`${packet.amount} ${packet.denom}`}</TableCell>
-                                            <TableCell align="right">
-                                                {packet.srcChannel}
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                {packet.dstChannel}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                    <TableRow key={`${row.sequence} ${row.hash}`}>
+                                        <TableCell component="th" scope="row">
+                                            {row.sequence}
+                                        </TableCell>
+                                        <TableCell>{row.fromAddr}</TableCell>
+                                        <TableCell>{row.toAddr}</TableCell>
+                                        <TableCell align="right">{`${row.amount} ${row.denom}`}</TableCell>
+                                        <TableCell align="right">
+                                            {row.srcChannel}
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            {row.dstChannel}
+                                        </TableCell>
+                                    </TableRow>
                                 </TableBody>
                             </Table>
                         </Box>
@@ -89,22 +88,13 @@ function Row(props) {
     );
 }
 
-class Dashboard extends React.Component {
+class Unrelayed extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             data: [],
-            page: 0,
-            limit: 10,
-            totalCount: 0,
-            loading: true,
             path: props.path,
-            txType: "from"
         }
-    }
-
-    capitalizeString = (value) => {
-        return value.charAt(0).toUpperCase() + value.slice(1);
     }
 
     callApi = () => {
@@ -112,16 +102,13 @@ class Dashboard extends React.Component {
         try {
             axios({
                 method: 'GET',
-                url: `http://143.198.99.191:5555/relayed-packets/${this.state.path}?${this.state.txType}Limit=${this.state.limit}
-&${this.state.txType}Offset=${this.state.page * this.state.limit}`
+                url: `http://143.198.99.191:5555/unrelayed/${this.state.path}`
             }).then(
                 (response) => {
                     let data = response.data;
                     this.setState({
-                        data: (data.data && data.data[`${this.state.txType}_osmosis_packets`]) || [],
+                        data: data.data || [],
                         loading: false,
-                        totalCount: (data.data && data.data.pagination &&
-                            data.data.pagination[`total${this.capitalizeString(this.state.txType)}Packets`]) || 0,
                     });
                 },
                 (error) => {
@@ -139,51 +126,31 @@ class Dashboard extends React.Component {
         this.callApi();
     }
 
-
     componentWillReceiveProps = (nextProps) => {
-        if (nextProps.path !== this.props.path || nextProps.txType !== this.props.txType) {
+        if (nextProps.path !== this.props.path) {
             this.setState({
-                path: nextProps.path,
-                txType: nextProps.txType,
                 data: [],
-                page: 0,
-                limit: 10,
-                totalCount: 0,
+                path: nextProps.path
             }, () => {
                 this.callApi();
             })
         }
     }
 
-    handleChangePage = (event, newPage) => {
-        this.setState({ page: newPage }, () => {
-            this.callApi();
-        })
-    };
-
-    handleChangeRowsPerPage = (event) => {
-        this.setState({
-            limit: parseInt(event.target.value, 10),
-            data: [],
-            page: 0,
-            totalCount: 0,
-        }, () => {
-            this.callApi();
-        })
-    };
-
     render() {
         return (
             <Paper>
-                <TableContainer style={{ paddingTop: 5 }}>
+                <TableContainer>
                     <Table aria-label="collapsible table">
                         <TableHead>
                             <TableRow>
                                 <TableCell />
-                                <TableCell>Tx Hash</TableCell>
-                                <TableCell align="center">Height</TableCell>
+                                <TableCell>Sequence</TableCell>
+                                <TableCell align="center">Txhash</TableCell>
                                 <TableCell align="center">Timestamp</TableCell>
-                                <TableCell align="center">Packets Count</TableCell>
+                                <TableCell align="center">From</TableCell>
+                                <TableCell align="center">To</TableCell>
+                                <TableCell align="center">Height</TableCell>
                             </TableRow>
                         </TableHead>
                         {
@@ -203,18 +170,9 @@ class Dashboard extends React.Component {
                         }
                     </Table>
                 </TableContainer>
-                <TablePagination
-                    rowsPerPageOptions={[10, 30, 100]}
-                    component="div"
-                    count={parseInt(this.state.totalCount, 10)}
-                    rowsPerPage={this.state.limit}
-                    page={this.state.page}
-                    onPageChange={this.handleChangePage}
-                    onRowsPerPageChange={this.handleChangeRowsPerPage}
-                />
             </Paper>
         );
     }
 }
 
-export default Dashboard;
+export default Unrelayed;
