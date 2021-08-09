@@ -80,7 +80,7 @@ function ResponsiveDrawer(props) {
             if (arr.length === 3) {
                 let pathIndex = paths.findIndex(x => x.path === arr[2]);
                 if (pathIndex === -1) {
-                    history.push({ pathname: "/404" })
+                    history.replace({ pathname: "/404" })
                 } else {
                     setRelayed(arr[1] === "relayed");
                     setSelected(pathIndex);

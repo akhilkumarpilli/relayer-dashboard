@@ -204,8 +204,10 @@ class Relayed extends React.Component {
                         textColor="primary"
                         centered
                     >
-                        <Tab label={`${paths[this.state.pathIndex].dst} to ${paths[this.state.pathIndex].src}`} />
-                        <Tab label={`${paths[this.state.pathIndex].src} to ${paths[this.state.pathIndex].dst}`} />
+                        <Tab label={this.state.pathIndex !== -1 ?
+                            `${paths[this.state.pathIndex].dst} to ${paths[this.state.pathIndex].src}` : ""} />
+                        <Tab label={this.state.pathIndex !== -1 ?
+                            `${paths[this.state.pathIndex].src} to ${paths[this.state.pathIndex].dst}` : ""} />
                     </Tabs>
                 </Paper>
                 <Paper>
