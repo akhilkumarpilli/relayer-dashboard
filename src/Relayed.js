@@ -12,9 +12,12 @@ import TableRow from '@material-ui/core/TableRow';
 import TablePagination from '@material-ui/core/TablePagination';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import axios from "axios";
+import { paths } from "./Constants.js";
 
 const useRowStyles = makeStyles({
     root: {
@@ -98,8 +101,10 @@ class Relayed extends React.Component {
             limit: 10,
             totalCount: 0,
             loading: true,
-            path: props.path,
-            txType: "from"
+            path: props.match.params.path,
+            txType: "from",
+            tabValue: 0,
+            pathIndex: paths.findIndex(x => x.path === props.match.params.path)
         }
     }
 
@@ -139,16 +144,17 @@ class Relayed extends React.Component {
         this.callApi();
     }
 
-
     componentWillReceiveProps = (nextProps) => {
-        if (nextProps.path !== this.props.path || nextProps.txType !== this.props.txType) {
+        if (nextProps.match.params.path !== this.props.match.params.path || nextProps.txType !== this.props.txType) {
             this.setState({
-                path: nextProps.path,
-                txType: nextProps.txType,
+                path: nextProps.match.params.path,
+                txType: "from",
+                tabValue: 0,
                 data: [],
                 page: 0,
                 limit: 10,
                 totalCount: 0,
+                pathIndex: paths.findIndex(x => x.path === nextProps.match.params.path)
             }, () => {
                 this.callApi();
             })
@@ -172,47 +178,76 @@ class Relayed extends React.Component {
         })
     };
 
+    handleChange = (event, newValue) => {
+        if (newValue !== this.state.tabValue) {
+            this.setState({
+                tabValue: newValue,
+                txType: newValue === 0 ? "from" : "to",
+                data: [],
+                page: 0,
+                totalCount: 0,
+                limit: 10,
+            }, () => {
+                this.callApi();
+            });
+        }
+    };
+
     render() {
         return (
-            <Paper>
-                <TableContainer style={{ paddingTop: 5 }}>
-                    <Table aria-label="collapsible table">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell />
-                                <TableCell>Tx Hash</TableCell>
-                                <TableCell align="center">Height</TableCell>
-                                <TableCell align="center">Timestamp</TableCell>
-                                <TableCell align="center">Packets Count</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        {
-                            (this.state.data.length && !this.state.loading) ?
-                                <TableBody>
-                                    {this.state.data.map((row) => (
-                                        <Row key={row.name} row={row} />
-
-                                    ))}
-                                </TableBody>
-                                :
-                                <TableRow key={"loading"}>
-                                    <TableCell style={{ borderBottom: 0 }} colSpan={6}>
-                                        <h5 style={{ textAlign: "center" }}>{this.state.loading ? "Loading..." : "No data found"}</h5>
-                                    </TableCell>
+            <>
+                <Paper>
+                    <Tabs
+                        value={this.state.tabValue}
+                        onChange={this.handleChange}
+                        indicatorColor="primary"
+                        textColor="primary"
+                        centered
+                    >
+                        <Tab label={`${paths[this.state.pathIndex].dst} to ${paths[this.state.pathIndex].src}`} />
+                        <Tab label={`${paths[this.state.pathIndex].src} to ${paths[this.state.pathIndex].dst}`} />
+                    </Tabs>
+                </Paper>
+                <Paper>
+                    <TableContainer style={{ paddingTop: 5 }}>
+                        <Table aria-label="collapsible table">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell />
+                                    <TableCell>Tx Hash</TableCell>
+                                    <TableCell align="center">Height</TableCell>
+                                    <TableCell align="center">Timestamp</TableCell>
+                                    <TableCell align="center">Packets Count</TableCell>
                                 </TableRow>
-                        }
-                    </Table>
-                </TableContainer>
-                <TablePagination
-                    rowsPerPageOptions={[10, 30, 100]}
-                    component="div"
-                    count={parseInt(this.state.totalCount, 10)}
-                    rowsPerPage={this.state.limit}
-                    page={this.state.page}
-                    onPageChange={this.handleChangePage}
-                    onRowsPerPageChange={this.handleChangeRowsPerPage}
-                />
-            </Paper>
+                            </TableHead>
+                            {
+                                (this.state.data.length && !this.state.loading) ?
+                                    <TableBody>
+                                        {this.state.data.map((row) => (
+                                            <Row key={row.name} row={row} />
+
+                                        ))}
+                                    </TableBody>
+                                    :
+                                    <TableRow key={"loading"}>
+                                        <TableCell style={{ borderBottom: 0 }} colSpan={6}>
+                                            <h5 style={{ textAlign: "center" }}>{this.state.loading ? "Loading..." : "No data found"}</h5>
+                                        </TableCell>
+                                    </TableRow>
+                            }
+                        </Table>
+                    </TableContainer>
+                    <TablePagination
+                        rowsPerPageOptions={[10, 30, 100]}
+                        component="div"
+                        count={parseInt(this.state.totalCount, 10)}
+                        rowsPerPage={this.state.limit}
+                        page={this.state.page}
+                        onPageChange={this.handleChangePage}
+                        onRowsPerPageChange={this.handleChangeRowsPerPage}
+                    />
+                </Paper>
+            </>
         );
     }
 }

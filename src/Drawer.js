@@ -19,6 +19,8 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import StarBorder from '@material-ui/icons/StarBorder';
+import { paths } from "./Constants.js";
+import { useHistory } from 'react-router-dom';
 
 const drawerWidth = 240;
 
@@ -63,11 +65,29 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function ResponsiveDrawer(props) {
-    const { window, selected, setSelected, menu, setValue, relayed, setRelayed } = props;
+    const { window } = props;
+    const history = useHistory();
     const classes = useStyles();
     const theme = useTheme();
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [open, setOpen] = React.useState(true);
+    const [relayed, setRelayed] = React.useState(true);
+    const [selected, setSelected] = React.useState(0);
+
+    React.useEffect(() => {
+        if (props.location && props.location.pathname) {
+            let arr = props.location.pathname.split("/")
+            if (arr.length === 3) {
+                let pathIndex = paths.findIndex(x => x.path === arr[2]);
+                if (pathIndex === -1) {
+                    history.push({ pathname: "/404" })
+                } else {
+                    setRelayed(arr[1] === "relayed");
+                    setSelected(pathIndex);
+                }
+            }
+        }
+    }, [props.location, history])
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -80,17 +100,18 @@ function ResponsiveDrawer(props) {
             setRelayed(!relayed);
             setSelected(0);
             setOpen(true);
+            history.replace({ pathname: `/${value ? 'relayed' : 'unrelayed'}/${paths[0].path}` })
         }
     }
 
     const handleSubMenuItem = (event, index) => {
         setSelected(index);
-        setValue(0);
+        history.replace({ pathname: `/${relayed ? 'relayed' : 'unrelayed'}/${paths[index].path}` })
     }
 
     const returnList = () => {
         return (<List component="div" disablePadding>
-            {menu.map((p, index) => (
+            {paths.map((p, index) => (
                 <>
                     <ListItem button
                         key={`${p.heading} ${relayed}`}
@@ -163,7 +184,7 @@ function ResponsiveDrawer(props) {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" noWrap>
-                        {`${menu[selected].heading} ${relayed ? 'Relayed' : 'Pending'} IBC transactions`}
+                        {`${paths[selected].heading} ${relayed ? 'Relayed' : 'Pending'} IBC transactions`}
                     </Typography>
                 </Toolbar>
             </AppBar>

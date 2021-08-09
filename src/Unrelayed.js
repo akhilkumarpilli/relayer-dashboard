@@ -93,7 +93,7 @@ class Unrelayed extends React.Component {
         super(props);
         this.state = {
             data: [],
-            path: props.path,
+            path: props.match.params.path,
         }
     }
 
@@ -102,7 +102,8 @@ class Unrelayed extends React.Component {
         try {
             axios({
                 method: 'GET',
-                url: `http://143.198.99.191:5555/unrelayed/${this.state.path}`
+                url: `http://143.198.99.191:5555/unrelayed/${this.state.path}`,
+                timeout: 10000
             }).then(
                 (response) => {
                     let data = response.data;
@@ -127,10 +128,10 @@ class Unrelayed extends React.Component {
     }
 
     componentWillReceiveProps = (nextProps) => {
-        if (nextProps.path !== this.props.path) {
+        if (nextProps.match.params.path !== this.props.match.params.path) {
             this.setState({
                 data: [],
-                path: nextProps.path
+                path: nextProps.match.params.path
             }, () => {
                 this.callApi();
             })
@@ -163,7 +164,7 @@ class Unrelayed extends React.Component {
                                 </TableBody>
                                 :
                                 <TableRow>
-                                    <TableCell style={{ borderBottom: 0 }} colSpan={6}>
+                                    <TableCell style={{ borderBottom: 0 }} colSpan={7}>
                                         <h5 style={{ textAlign: "center" }}>{this.state.loading ? "Loading..." : "No data found"}</h5>
                                     </TableCell>
                                 </TableRow>
