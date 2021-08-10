@@ -102,8 +102,7 @@ class Unrelayed extends React.Component {
         try {
             axios({
                 method: 'GET',
-                url: `http://143.198.99.191:5555/unrelayed/${this.state.path}`,
-                timeout: 10000
+                url: `http://143.198.99.191:5555/unrelayed/${this.state.path}`
             }).then(
                 (response) => {
                     let data = response.data;

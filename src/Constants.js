@@ -35,5 +35,11 @@ export const paths = [
         heading: "Starname-Osmosis",
         src: "Starname",
         dst: "Osmosis"
+    },
+    {
+        path: "regen-osmosis",
+        heading: "Regen-Osmosis",
+        src: "Regen",
+        dst: "Osmosis"
     }
 ]
